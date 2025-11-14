@@ -48,9 +48,8 @@ float Int_calculada;
 
 uint32_t counter = 0;
 
-float med_Ieficaz();
-float refeito_med_Ieficaz(float *frequency);
-float hugo_med_Ieficaz();
+float med_Ieficaz(float *frequency);
+float inital_med_Ieficaz();
 
 #define I2C_SDA_PIN 4
 #define I2C_SCL_PIN 15
@@ -195,7 +194,7 @@ void loop() {
   */
 
   float frequency;
-  Int_calculada = refeito_med_Ieficaz(&frequency);
+  Int_calculada = med_Ieficaz(&frequency);
   Serial.println(Int_calculada);
   Int_calculada = Int_calculada; // é multiplicado por um valor de correção baseado em medições reais
   Peficaz = Int_calculada * VOLTRED;  //P=V*I
@@ -214,8 +213,8 @@ void loop() {
   }
 
   if(frequency < 59) {
-    while(1){
-      Serial.printf("error frequency: %.6f\n", frequency);
+    Serial.printf("error frequency: %.6f\n", frequency);
+    while(0){
     }
   }
 
@@ -283,47 +282,7 @@ void loop() {
   delay(uplinkIntervalSeconds * 0);
 }
 
-
-float med_Ieficaz() {                         
-  int16_t bitsads;
-  float mVporbit = 0.0625F;
-  float Ieficaz;
-  float Iinstant;
-  float mVinstant;
-  float sumIinstant=0;
-
-  long sample_interval_us = (1000*1000) / 860; // Aprox. 1163 µs
-  long next_sample_time = micros();
-  
-  ads.startADCReading(ADS1X15_REG_CONFIG_MUX_DIFF_0_1, /*continuous=*/true);
-  
-  float tempoinicio = millis();                       // para medir quanto tempo leva para realizar as medições
-  for (int i = 0; i < AMOSTRAS; i++) {
-    //bitsads = ads.readADC_Differential_0_1();
-    // 2. Espere até o momento da próxima amostra
-    while (micros() < next_sample_time) {
-      // Loop de espera ativa.
-      // Em um sistema mais avançado, o MCU poderia dormir aqui.
-    }
-    // Define o tempo para a *próxima* amostra
-    next_sample_time += sample_interval_us;
-
-    bitsads = ads.getLastConversionResults();
-
-    mVinstant = bitsads * mVporbit;
-    Iinstant = mVinstant * AMAXSENS / MVMAXSENS;   // regra de três baseada no sensor conectado já que o sensor oferece tensão e a passamos diretamente proporcional à intensidade
-    sumIinstant += sq(Iinstant);                   // soma dos quadrados
-  }
-  float tempofim = millis();
-
-  Ieficaz = sqrt(sumIinstant / AMOSTRAS);        // raiz quadrada da soma dos quadrados dividida pelo número de amostras
-
-  Serial.print((tempofim - tempoinicio) / 1000.0);
-  Serial.println(" segundos para medir");
-  return (Ieficaz);
-}
-
-float refeito_med_Ieficaz(float* frequency) {                         
+float med_Ieficaz(float* frequency) {                         
   int16_t bitsads;
   float mVporbit = 0.0625F;
   float Ieficaz;
@@ -490,5 +449,44 @@ float refeito_med_Ieficaz(float* frequency) {
   
   *frequency = freq;
 
+  return (Ieficaz);
+}
+
+float initial_med_Ieficaz() {                         
+  int16_t bitsads;
+  float mVporbit = 0.0625F;
+  float Ieficaz;
+  float Iinstant;
+  float mVinstant;
+  float sumIinstant=0;
+
+  long sample_interval_us = (1000*1000) / 860; // Aprox. 1163 µs
+  long next_sample_time = micros();
+  
+  ads.startADCReading(ADS1X15_REG_CONFIG_MUX_DIFF_0_1, /*continuous=*/true);
+  
+  float tempoinicio = millis();                       // para medir quanto tempo leva para realizar as medições
+  for (int i = 0; i < AMOSTRAS; i++) {
+    //bitsads = ads.readADC_Differential_0_1();
+    // 2. Espere até o momento da próxima amostra
+    while (micros() < next_sample_time) {
+      // Loop de espera ativa.
+      // Em um sistema mais avançado, o MCU poderia dormir aqui.
+    }
+    // Define o tempo para a *próxima* amostra
+    next_sample_time += sample_interval_us;
+
+    bitsads = ads.getLastConversionResults();
+
+    mVinstant = bitsads * mVporbit;
+    Iinstant = mVinstant * AMAXSENS / MVMAXSENS;   // regra de três baseada no sensor conectado já que o sensor oferece tensão e a passamos diretamente proporcional à intensidade
+    sumIinstant += sq(Iinstant);                   // soma dos quadrados
+  }
+  float tempofim = millis();
+
+  Ieficaz = sqrt(sumIinstant / AMOSTRAS);        // raiz quadrada da soma dos quadrados dividida pelo número de amostras
+
+  Serial.print((tempofim - tempoinicio) / 1000.0);
+  Serial.println(" segundos para medir");
   return (Ieficaz);
 }
