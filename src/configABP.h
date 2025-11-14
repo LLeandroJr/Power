@@ -1,0 +1,49 @@
+#ifndef _RADIOLIB_EX_LORAWAN_CONFIG_H
+#define _RADIOLIB_EX_LORAWAN_CONFIG_H
+
+#include <Arduino.h>
+#include <boards.h>
+#include <RadioLib.h>
+#include "utilsLorawan.h"
+
+
+Radio radio = new RadioModule();
+
+// how often to send an uplink - consider legal & FUP constraints - see notes
+#ifdef DO_WORK_INTERVAL_SECONDS
+const uint32_t uplinkIntervalSeconds = DO_WORK_INTERVAL_SECONDS;    // minutes x seconds
+#else
+const uint32_t uplinkIntervalSeconds = 30   ;    // minutes x seconds
+#endif
+
+// device address - either a development address or one assigned
+// to the LoRaWAN Service Provider - TTN will generate one for you
+#ifndef RADIOLIB_LORAWAN_DEV_ADDR   // Replace with your DevAddr
+#define RADIOLIB_LORAWAN_DEV_ADDR  0xABC12345
+#endif
+
+#ifndef RADIOLIB_LORAWAN_NWKSENC_KEY   // Replace with your NwkSEnc Key 
+//#define RADIOLIB_LORAWAN_NWKSENC_KEY 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+//#define RADIOLIB_LORAWAN_NWKSENC_KEY 0x2E,0xB0,0x04,0xF6,0xB3,0xD7,0xBF,0x87,0xFF,0x92,0xF5,0xC5,0xC5,0xBD,0x0E,0xC3
+#define RADIOLIB_LORAWAN_NWKSENC_KEY 0xC3,0x0E,0xBD,0xC5,0xC5,0xF5,0x92,0xFF,0x87,0xBF,0xD7,0xB3,0xF6,0x04,0xB0,0x2E
+
+#endif
+#ifndef RADIOLIB_LORAWAN_APPS_KEY   // Replace with your AppS Key 
+//#define RADIOLIB_LORAWAN_APPS_KEY   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+//#define RADIOLIB_LORAWAN_APPS_KEY   0x6D,0x8E,0x72,0x5E,0x20,0x34,0x26,0xF9,0xF6,0x21,0xF3,0x58,0xA4,0x62,0xD7,0xC8
+#define RADIOLIB_LORAWAN_APPS_KEY 0xC8,0xD7,0x62,0xA4,0x58,0xF3,0x21,0xF6,0xF9,0x26,0x34,0x20,0x5E,0x72,0x8E,0x6D
+#endif
+
+// regional choices: EU868, US915, AU915, AS923, AS923_2, AS923_3, AS923_4, IN865, KR920, CN500
+const LoRaWANBand_t Region = AU915;
+const uint8_t subBand = 2;  // For US915 and AU915, change this to 2, otherwise leave on 0
+
+// copy over the keys in to the something that will not compile if incorrectly formatted
+uint32_t devAddr =        RADIOLIB_LORAWAN_DEV_ADDR;
+uint8_t nwkSEncKey[] =  { RADIOLIB_LORAWAN_NWKSENC_KEY };
+uint8_t appSKey[] =     { RADIOLIB_LORAWAN_APPS_KEY };
+
+// create the LoRaWAN node
+LoRaWANNode node(&radio, &Region, subBand);
+
+#endif
